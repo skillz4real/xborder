@@ -1,4 +1,4 @@
-#!/bin/python3
+#!/usr/bin/python3
 import argparse
 import json
 import os
@@ -10,6 +10,7 @@ import webbrowser
 import cairo
 import gi
 import requests
+import psutil
 
 gi.require_version("Gtk", "3.0")
 gi.require_version("Gdk", "3.0")
@@ -33,6 +34,23 @@ BORDER_A = 1
 SMART_HIDE_BORDER = False
 NO_VERSION_NOTIFY = False
 OFFSETS = [0, 0, 0, 0]
+
+def kill():
+    """kills any existing xborder process"""
+    for proc in psutil.process_iter():
+        try:
+            if proc.name() == 'python3':
+                cmd = proc.cmdline()
+
+                if len(cmd) > 1 and 'xborders' in cmd[1]:
+                    proc.terminate()
+                    print(f"Process killed successfully")
+        except (psutil.NoSuchProcess):
+            pass
+        except(psutil.AccessDenied):
+            print("Couldn't kill process, check permissions")
+        except:
+            print("Error killing process")
 
 
 def set_border_rgba(args):
@@ -281,7 +299,8 @@ class Highlight(Gtk.Window):
 
         # We can still set this for old configurations, we don't want to update and have the user confused as to what
         # has happened
-        self.set_wmclass("xborders", "xborder")
+        #self.set_wmclass("xborders", "xborder")
+        self.set_property("startup-id","xborders.xborder")
 
         self.resize(screen_width, screen_height)
         self.move(0, 0)
@@ -460,6 +479,7 @@ def main():
 
 if __name__ == "__main__":
     try:
+        kill()
         main()
     except KeyboardInterrupt:
         exit(0)
